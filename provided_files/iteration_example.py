@@ -33,18 +33,18 @@ DP = 4.65
 c07 = 1.6182
 NPB = 3
 
-rR = np.array([0.167, 0.2, ..., 0.9, 1.0]) # Array of non-dimensional radii of each blade section
+rR = np.array([0.167, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7, 0.8 , 0.9, 1.0]) # Array of non-dimensional radii of each blade section
 r = rR * DP/2. # dimensional radius
-cD = np.array([0.286, 0.299, ..., 0.304, 0.0]) # Chord over diameter ratio for each blade section
+cD = np.array([0.257, 0.27, 0.306, 0.321, 0.333, 0.343, 0.35, 0.354, 0.355, 0.348, 0.32, 0.257, 0.0]) # Chord over diameter ratio for each blade section
 chord = cD * DP # dimensional chord
-PD = np.array([1.15, 1.15, ..., 1.15, 1.15]) # Pitch over diameter ratio for each blade section
+PD = np.array([0.88, 0.904, 0.976, 1.021, 1.045, 1.028, 1.014, 1.046, 1.1, 1.167, 1.177, 1.148, 1.1]) # Pitch over diameter ratio for each blade section
 pitch = PD * DP # dimensional pitch
-J = np.array([0.5, 0.6, ..., 1.0, 1.1]) # Advance ratios to calculate at
+J = np.array([ 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1 ]) # Advance ratios to calculate at
 
 num_J = len(J)
 num_rR = len(rR)
 
-num_AoA = len(np.linspace(-8,8,0.5)) # The number of angles of attack tested in xfoil
+num_AoA = len(np.arange(-8,8,0.5)) # The number of angles of attack tested in xfoil
 # The database of xfoil results you have collected, from xfoil results at many angles of attack for each foil section
 alpha_database = np.array((num_AoA,num_rR)) 
 CL_database = np.array((num_AoA,num_rR)) 
