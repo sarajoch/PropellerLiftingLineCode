@@ -100,7 +100,88 @@ def llcWithoutInducedVelocity():
 
     return KT, KQ, eta
 
-KT, KQ, eta = llcWithoutInducedVelocity()
+def simpleInducedVel(tol, max_iter, r):
+    num_J = len(J_values)
+    num_r = len(r)
+
+    gamma = np.zeros((num_J, num_r))
+
+    KT = []
+    KQ = []
+    eta = []
+    beta_i = np.zeros((num_J, num_r))
+
+    for j in range(num_J):
+        n = (Rn * nu) / (c07 * D * np.sqrt(J_values[j]**2 + (0.7 * np.pi)**2))
+        V = J_values[j] * n * D
+    
+        dT = []
+        dQ = []
+
+        Ut_all = np.zeros(num_r)
+        Ua_all = np.zeros(num_r)
+        beta_all = np.zeros(num_r) 
+        Vinf_all = np.zeros(num_r)
+        alpha_all = np.zeros(num_r)
+        CL_all = np.zeros(num_r)
+
+        diff = 1.0
+        iter = 0
+
+        gamma_J = np.ones(num_r) * 0.1
+        gamma_new = np.zeros(num_r)
+
+        while diff > tol and iter < max_iter:
+
+            for i in range(num_r):
+                Ut, Ua = computeUtUa(r[i], V, n, gamma_J[i])
+                beta, Vinf, alpha = computeBetaiVinfAlpha(r[i], V, n, Ut, Ua, P[i])
+                phi = np.arctan(P[i]/(2*np.pi*r[i]))
+                alpha = phi - beta
+                CL = Cl_values[i] + 2 * np.pi * alpha
+                gamma_new[i] = Vinf * c[i] * CL / 2
+                if i == 0 or i == (len(r) - 1):
+                    gamma_new[i] = 0
+
+                Ut_all[i] = Ut
+                Ua_all[i] = Ua
+                beta_all[i] = beta
+                Vinf_all[i] = Vinf
+                alpha_all[i] = alpha
+                CL_all[i] = CL
+
+            # Check difference in gamma (excluding root and tip), reset gamma as needed
+            h = gamma_J[1:-1]
+            mean = np.mean(gamma_J[1:-1])
+            diff = np.linalg.norm(gamma_new[1:-1] - gamma_J[1:-1]) / np.mean(gamma_J[1:-1])
+            if diff >= tol:
+                gamma_J += 0.1*(gamma_new - gamma_J) # Here we use an under-relaxation term to avoid 'jumping' between circulation distributions.
+                iter += 1
+            else :
+                gamma[j,:] = gamma_new
+                beta_i[j] = beta_all
+
+        for k in range(num_r):
+            Rn_inf = (Vinf_all[k] * c[k])/nu
+            Cf = 0.075/(np.log10(Rn_inf)-2)**2
+            #Cd = 2 * Cf * (1 + 2 * (t[k]/c[k]) + 60 * (t[k]/c[k])**4) * ( 1 + (CL_all[k]**2)/8)
+            Cd = 2 * Cf * ( 1 + 2 * (t[k]/c[k])) + ((0.15**2 - (EAR/z)**2) * (1.375 + 0.967 * (P[k]/D)**2)) - ((0.15**3 - (EAR/z)**3) * (5.928 + 4.505 * (P[k]/D)**2))
+            dD = (rho/2) * Vinf_all[k]**2 * c[k] * Cd 
+            dT.append(rho * gamma_new[k] * 2 * np.pi * r[k] * n - dD * np.sin(beta_all[k]))
+            dQ.append((rho * gamma_new[k] * V + dD * np.cos(beta_all[k])) * r[k])
+
+        T = z * trapezoid(np.array(dT), r)
+        Q = z * trapezoid(np.array(dQ), r)
+        thrustCoeff = T/(rho * n**2 * D**4)
+        torqueCoeff = Q/(rho * n**2 * D**5)
+        KT.append(thrustCoeff)
+        KQ.append(torqueCoeff * 10)
+        eta.append((J_values[j] / (2*np.pi) ) * (thrustCoeff / torqueCoeff))
+    
+    return KT, KQ, eta, beta_i
+
+KT, KQ, eta, beta = simpleInducedVel(10e-10, 1000, r_values)
+#KT, KQ, eta = llcWithoutInducedVelocity()
 plotOpenWaterData(J_values, KT, KQ, eta, J_ow, Ktexp, Kqexp, etaexp)
             
 
