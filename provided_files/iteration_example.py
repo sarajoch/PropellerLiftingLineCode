@@ -19,10 +19,12 @@ def computeBetaiVinf(r,V0,n,Ut,Ua) :
 def computePitchAngle(P, r) :
     return np.arctan(P/(2*np.pi*r))
 
-def computeAngleAttack() :
-    a = 1
+def computeAngleAttack(phi, beta_i) :
+    return phi - beta_i
+
 def interpolateCL() :
     a = 1
+    
 def computeGammaTot() :
     a = 1
 
